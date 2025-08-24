@@ -509,7 +509,7 @@ export default function App() {
                   min={0}
                   max={100}
                   step={1}
-                  value={Math.round(weights[key] * 100)}
+                  value={Math.round(W[key] * 100)}
                   onChange={(e) =>
                     setWeights({
                       ...weights,
@@ -586,9 +586,9 @@ export default function App() {
                 </div>
               </Card>
 
-              {/* Transparency: top 5 per category */}
+              {/* Transparency: top 3 per category */}
               <Card>
-                <SectionTitle>Top 5 per Category</SectionTitle>
+                <SectionTitle>Top 3 per Category</SectionTitle>
                 <div className="space-y-4">
                   {TARGET_CATEGORIES.map((cat) => (
                     <div key={cat}>
@@ -596,7 +596,7 @@ export default function App() {
                         {cat}
                       </div>
                       <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-                        {(results.byCat[cat] ?? []).slice(0, 5).map((r, i) => (
+                        {(results.byCat[cat] ?? []).slice(0, 3).map((r, i) => (
                           <div
                             key={r.email + i}
                             className="rounded-xl border border-slate-200 p-3 bg-white"
@@ -639,36 +639,39 @@ export default function App() {
                 <SectionTitle>How the Algorithm Works</SectionTitle>
                 <ol className="list-decimal ml-5 text-sm space-y-2 text-slate-700">
                   <li>
-                    Parse salary (USD) from{" "}
-                    <code>annual_salary_expectation.full-time</code>; lower is
-                    better.
+                    We check each candidate’s <strong>expected salary</strong> —
+                    lower salaries score better for budget-friendliness.
                   </li>
                   <li>
-                    Compute <strong>experience hits</strong> by matching role
-                    titles against role keywords per category.
+                    We look at their <strong>past job titles</strong> to see if
+                    they match the role (e.g. “Full Stack Developer”).
                   </li>
                   <li>
-                    Compute <strong>skill hits</strong> via intersection with
-                    category skill keywords.
+                    We scan their <strong>skills</strong> for keywords relevant
+                    to the job.
                   </li>
                   <li>
-                    Normalize the three signals inside each category (so
-                    different scales are comparable).
+                    Each of these signals is <strong>scaled fairly</strong> so
+                    they can be compared apples-to-apples.
                   </li>
                   <li>
-                    Score = w<sub>exp</sub>·exp + w<sub>skill</sub>·skill + w
-                    <sub>salary</sub>·(inverse salary).
+                    We combine them into a single score using the weights you
+                    set above.
                   </li>
                   <li>
-                    Sort by score; break ties by lower salary, then more skills.
+                    Candidates are ranked by score. If two are close, the system
+                    prefers the one with a lower salary or more skills.
                   </li>
                   <li>
-                    Pick top per category; if diversity is on and two picks
-                    share a country, allow a runner‑up within 2%.
+                    Finally, we pick the top person for each role. With the
+                    diversity option on, we try to spread hires across different
+                    countries when possible.
                   </li>
                 </ol>
                 <p className="text-xs text-slate-500 mt-3">
-                  Weights are adjustable above; they auto‑normalize to sum to 1.
+                  You can adjust the sliders above to give more importance to
+                  experience, skills, or budget. The weights always add up to
+                  100%.
                 </p>
               </Card>
             </aside>
