@@ -192,40 +192,6 @@ const parseSalary = (c: Candidate): number | null => {
   }
 };
 
-const countryFromLocation = (loc?: string | null): string => {
-  if (!loc) return "Unknown";
-  const l = loc.toLowerCase();
-  const map: Record<string, string> = {
-    us: "United States",
-    usa: "United States",
-    uk: "United Kingdom",
-    in: "India",
-    brasil: "Brazil",
-  };
-  const tokens = [
-    "united states",
-    "usa",
-    "us",
-    "canada",
-    "mexico",
-    "brazil",
-    "brasil",
-    "argentina",
-    "united kingdom",
-    "uk",
-    "india",
-    "uae",
-    "peru",
-    "colombia",
-    "switzerland",
-    "egypt",
-  ];
-  for (const t of tokens)
-    if (l.includes(t)) return map[t] ?? t.replace(/^./, (c) => c.toUpperCase());
-  const parts = loc.split(",");
-  return parts[parts.length - 1]?.trim() || "Unknown";
-};
-
 const formatMoney = (n: number | null | undefined) =>
   n == null
     ? "N/A"
@@ -243,7 +209,6 @@ type EvalRow = {
   name: string;
   email: string;
   location: string;
-  country: string;
   salary: number | null;
   expHits: number;
   skillHits: number;
@@ -293,14 +258,12 @@ function scoreCategory(
       `Candidate_${idx + 1}`;
     const email = String(cand.email ?? "");
     const location = String(cand.location ?? "");
-    const country = countryFromLocation(location);
     rows.push({
       idx,
       category,
       name,
       email,
       location,
-      country,
       salary: sal,
       expHits: eHits,
       skillHits: sHits,
@@ -359,13 +322,16 @@ function chooseTeam(
     if (!list || list.length === 0) continue;
     let pick = list[0];
 
-    if (diversityNudge && usedCountries.get(pick.country) && list.length > 1) {
+    if (diversityNudge && usedCountries.get(pick.location) && list.length > 1) {
       const alt = list[1];
       if (alt.score >= 0.98 * pick.score) pick = alt; // prefer slight runner-up to diversify geography
     }
 
     chosen.push(pick);
-    usedCountries.set(pick.country, (usedCountries.get(pick.country) ?? 0) + 1);
+    usedCountries.set(
+      pick.location,
+      (usedCountries.get(pick.location) ?? 0) + 1
+    );
   }
 
   return { chosen, byCat };
@@ -419,7 +385,6 @@ function toCSV(rows: EvalRow[]): string {
       r.category,
       r.name,
       r.email,
-      r.country,
       r.location,
       r.salary ?? "",
       r.expHits,
@@ -554,16 +519,19 @@ export default function App() {
                       className="rounded-xl border border-slate-200 p-4"
                     >
                       <div className="text-sm text-slate-500">{r.category}</div>
-                      <div className="mt-1 text-lg font-semibold">{r.name}</div>
+
+                      <div className="flex items-center justify-between">
+                        <div className="mt-1 text-lg font-semibold">
+                          {r.name}
+                        </div>
+                        <SalaryBadge n={r.salary} />
+                      </div>
+
                       <div className="text-xs text-slate-500">{r.email}</div>
                       <div className="mt-2 flex items-center gap-2">
-                        <span className="text-xs rounded-full bg-slate-100 px-2 py-0.5">
-                          {r.country}
-                        </span>
                         <span className="text-xs text-slate-500">
                           {r.location}
                         </span>
-                        <SalaryBadge n={r.salary} />
                       </div>
                       <div className="mt-3 grid grid-cols-3 text-center text-xs">
                         <div>
@@ -608,7 +576,7 @@ export default function App() {
                               <SalaryBadge n={r.salary} />
                             </div>
                             <div className="text-xs text-slate-500 truncate">
-                              {r.country} · {r.location}
+                              {r.location}
                             </div>
                             <div className="mt-2 grid grid-cols-3 text-center text-[11px]">
                               <div>
